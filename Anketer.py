@@ -275,11 +275,11 @@ def show_admin(chat_id):
 
 
 def save_users():
-    with open("config.uni", "w",encoding="utf-8") as f:
+    with open("config.uni", "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False)
 
 def save_pols():
-    with open("users.uni", "w",encoding="utf-8") as f:
+    with open("users.uni", "w", encoding="utf-8") as f:
         json.dump(fl, f, ensure_ascii=False)
 
 def show_keyboard(chat_id):
