@@ -58,6 +58,7 @@ call_data = ''
 call_message = ''
 drive_kl = False
 delit = []
+klych =False
 def find_row_with_date(csv_file, target_date):
     with open(csv_file, newline='', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
@@ -933,6 +934,11 @@ def reply_to_message(message):
     else:
         botman.send_message(message.chat.id, "Команда не распознана")
 
+@bot.message_handler(commands=['settings'])
+def settings(message):
+    user_state[message.chat.id] = "set"
+    bot.send_message(message.chat.id, "Заполните данные сначала")
+    bot.send_message(message.chat.id, "Введите гос.номер:")
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -1027,7 +1033,7 @@ def urgent_request(message):
 
 @bot.message_handler(func=lambda message: (message.chat.id in fl["allowed_users"]) or proverka(message))
 def reply_to_message(message):
-    global cel, call_data, call_message, drive_kl, csv_filename
+    global cel, call_data, call_message, drive_kl, csv_filename,klych
     if message.chat.id not in user_state.keys():
         user_state[message.chat.id] = ""
     if message.text == "Заполнить карту ежедневного осмотра":
@@ -1108,6 +1114,22 @@ def reply_to_message(message):
         botman.send_message(fl["admin_id"], pol0 + pol1 + pol2)
         user_state[message.chat.id] = ""
 
+    elif user_state[message.chat.id] == 'set':
+        if str(message.chat.id) not in users[str(message.chat.id)].keys():
+            users[str(message.chat.id)] = {
+                "gos_nomer": "",
+                "driver": '',
+                "probeg": "0"
+            }
+        users[str(message.chat.id)]["gos_nomer"] = message.text
+        bot.send_message(message.chat.id, "Введите ФИО:")
+        user_state[message.chat.id] = "updater"
+
+    elif user_state[message.chat.id] == "updater":
+        users[str(message.chat.id)]["driver"] = message.text
+        show_update_keyboard(message)
+        klych = True
+
     elif user_state[message.chat.id] == 'car':
         if message.text == "373373373":
             fl["allowed_users"].append(message.chat.id)
@@ -1128,7 +1150,12 @@ def reply_to_message(message):
     elif user_state[message.chat.id] == "correction":
         if message.text == "Да":
             save_users()
-            if drive_kl == True:
+            if klych ==True:
+                user_state[message.chat.id] = ""
+                klych = False
+                bot.send_message(message.chat.id, "Данные откорректированы",
+                                 reply_markup=types.ReplyKeyboardRemove())
+            elif drive_kl == True:
                 user_state[message.chat.id] = "urgent_request"
                 drive_kl = False
                 bot.send_message(message.chat.id, "Введите текст срочной заявки",
